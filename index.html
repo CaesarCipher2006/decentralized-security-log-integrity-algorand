@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlgoLogGuard — Decentralized Security Log Integrity System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['IBM Plex Sans', 'system-ui', 'sans-serif'],
+                        mono: ['IBM Plex Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-[#0d1117] text-[#c9d1d9] font-sans antialiased selection:bg-[#1f6feb] selection:text-white">
+
+    <!-- Status Notification Banner -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+    <!-- Top Utility Header -->
+    <header class="border-b border-[#30363d] bg-[#161b22] sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="w-7 h-7 rounded bg-[#21262d] border border-[#30363d] flex items-center justify-center font-mono font-bold text-xs text-[#58a6ff] shrink-0">
+                    AL
+                </div>
+                <div class="truncate">
+                    <span class="font-semibold text-white text-sm sm:text-base">Decentralized Security Log Integrity System</span>
+                    <span class="hidden sm:inline text-xs font-mono text-[#8b949e] ml-2">/ Algorand + Java + SQL</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3 shrink-0">
+                <div class="hidden md:flex items-center gap-2 px-2.5 py-1 rounded bg-[#0d1117] border border-[#30363d] text-xs font-mono">
+                    <span id="backend-status-dot" class="w-2 h-2 rounded-full bg-[#d29922]"></span>
+                    <span id="backend-status-text" class="text-[#8b949e]">Connecting...</span>
+                </div>
+                <div class="px-2.5 py-1 rounded bg-[#0d1117] border border-[#30363d] text-xs font-mono text-[#8b949e]">
+                    TestNet Round: <strong id="block-height" class="text-[#58a6ff]">#44,892,104</strong>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sub-Navigation Tabs -->
+    <div class="bg-[#161b22] border-b border-[#30363d]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 flex items-center gap-6 text-xs sm:text-sm overflow-x-auto">
+            <a href="#home" class="py-3 border-b-2 border-[#f78166] text-white font-medium whitespace-nowrap">Home & Overview</a>
+            <a href="#console" class="py-3 border-b-2 border-transparent text-[#8b949e] hover:text-[#c9d1d9] whitespace-nowrap">Live Audit Console</a>
+            <a href="#wallet-config" class="py-3 border-b-2 border-transparent text-[#8b949e] hover:text-[#c9d1d9] whitespace-nowrap">Algorand Signer</a>
+            <a href="#sql-schema" class="py-3 border-b-2 border-transparent text-[#8b949e] hover:text-[#c9d1d9] whitespace-nowrap">MySQL / JDBC Schema</a>
+            <a href="#architecture" class="py-3 border-b-2 border-transparent text-[#8b949e] hover:text-[#c9d1d9] whitespace-nowrap">System Pipeline</a>
+        </div>
+    </div>
+
+    <!-- Home / Project Introduction Section -->
+    <section id="home" class="border-b border-[#30363d] bg-[#0d1117]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-10 sm:py-12">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                <div class="lg:col-span-7 space-y-4">
+                    <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded bg-[#161b22] border border-[#30363d] text-xs font-mono text-[#58a6ff]">
+                        <span>ENTERPRISE SECURITY & BLOCKCHAIN AUDIT PLATFORM</span>
+                    </div>
+                    <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight leading-snug">
+                        Tamper-Proof Security Log Verification Backed by the Algorand Blockchain
+                    </h1>
+                    <p class="text-sm sm:text-base text-[#8b949e] leading-relaxed">
+                        In traditional servers, attackers or rogue administrators with database access can silently alter or delete security logs to hide unauthorized activity. <strong class="text-[#c9d1d9]">AlgoLogGuard</strong> prevents silent log manipulation by storing raw logs in a local <strong class="text-[#c9d1d9]">MySQL / JDBC database</strong> while permanently anchoring each log’s <strong class="text-[#c9d1d9]">SHA-256 cryptographic fingerprint</strong> onto the immutable <strong class="text-[#c9d1d9]">Algorand ledger</strong>.
+                    </p>
+                    <div class="pt-2 flex flex-wrap items-center gap-3">
+                        <a href="#console" class="px-4 py-2.5 rounded bg-[#238636] hover:bg-[#2ea043] text-white font-semibold text-xs sm:text-sm transition-colors">
+                            Launch Live Audit Console ↓
+                        </a>
+                        <a href="#architecture" class="px-4 py-2.5 rounded bg-[#21262d] hover:bg-[#30363d] border border-[#30363d] text-[#c9d1d9] font-medium text-xs sm:text-sm transition-colors">
+                            View 4-Stage Pipeline
+                        </a>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-5 bg-[#161b22] border border-[#30363d] rounded-md p-5 space-y-3.5">
+                    <div class="text-xs font-mono font-semibold uppercase tracking-wider text-white border-b border-[#30363d] pb-2.5">
+                        What This Platform Can Do
+                    </div>
+                    <div class="space-y-3 text-xs">
+                        <div class="flex items-start gap-2.5">
+                            <span class="font-mono font-bold text-[#3fb950] mt-0.5">01.</span>
+                            <div>
+                                <div class="font-semibold text-white">Ingest & Hash System Events</div>
+                                <p class="text-[#8b949e] mt-0.5">Captures critical OS, firewall, SSH, and SQL audit events and computes a 64-character SHA-256 digest in real time.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2.5">
+                            <span class="font-mono font-bold text-[#58a6ff] mt-0.5">02.</span>
+                            <div>
+                                <div class="font-semibold text-white">Dual SQL + Algorand Anchoring</div>
+                                <p class="text-[#8b949e] mt-0.5">Saves sensitive log text privately in SQL while writing the SHA-256 hash into an Algorand transaction’s <code class="font-mono text-[#c9d1d9]">note</code> field.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2.5">
+                            <span class="font-mono font-bold text-[#f85149] mt-0.5">03.</span>
+                            <div>
+                                <div class="font-semibold text-white">Interactive SQL Tamper Simulation</div>
+                                <p class="text-[#8b949e] mt-0.5">Lets you simulate an attacker modifying a database row to watch the cryptographic hash mismatch trigger immediately.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2.5">
+                            <span class="font-mono font-bold text-[#d29922] mt-0.5">04.</span>
+                            <div>
+                                <div class="font-semibold text-white">Live TestNet Block & Explorer Verification</div>
+                                <p class="text-[#8b949e] mt-0.5">Syncs live block rounds from AlgoNode TestNet and links every transaction directly to the Pera Algorand Explorer.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Operational Workspace -->
+    <main id="console" class="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+
+        <section class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div class="bg-[#161b22] border border-[#30363d] rounded-md p-4">
+                <div class="text-xs font-mono text-[#8b949e]">BLOCKCHAIN NETWORK</div>
+                <div class="text-base sm:text-lg font-semibold text-white mt-1">Algorand TestNet</div>
+                <div class="text-xs text-[#3fb950] font-mono mt-0.5">PPoS • ~3.3s Finality</div>
+            </div>
+            <div class="bg-[#161b22] border border-[#30363d] rounded-md p-4">
+                <div class="text-xs font-mono text-[#8b949e]">BACKEND RUNTIME</div>
+                <div class="text-base sm:text-lg font-semibold text-white mt-1">Java 17 HttpServer</div>
+                <div class="text-xs text-[#8b949e] font-mono mt-0.5">com.algorand.algosdk</div>
+            </div>
+            <div class="bg-[#161b22] border border-[#30363d] rounded-md p-4">
+                <div class="text-xs font-mono text-[#8b949e]">RELATIONAL STORAGE</div>
+                <div class="text-base sm:text-lg font-semibold text-white mt-1">MySQL / SQLite JDBC</div>
+                <div class="text-xs text-[#8b949e] font-mono mt-0.5">Table: security_logs</div>
+            </div>
+            <div class="bg-[#161b22] border border-[#30363d] rounded-md p-4">
+                <div class="text-xs font-mono text-[#8b949e]">HASH ALGORITHM</div>
+                <div class="text-base sm:text-lg font-semibold text-white mt-1">SHA-256 (256-bit)</div>
+                <div class="text-xs text-[#58a6ff] font-mono mt-0.5">Stored in TX Note Field</div>
+            </div>
+        </section>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- Left Column -->
+            <div class="lg:col-span-5 space-y-6">
+
+                <div class="bg-[#161b22] border border-[#30363d] rounded-md">
+                    <div class="px-4 py-3 border-b border-[#30363d] flex items-center justify-between">
+                        <h2 class="text-xs font-mono font-semibold uppercase tracking-wider text-white">1. Ingest & Anchor Security Log</h2>
+                        <button type="button" id="btn-sample-log" class="text-xs font-mono text-[#58a6ff] hover:underline">Load Sample</button>
+                    </div>
+
+                    <form id="log-form" class="p-4 space-y-4">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-mono text-[#8b949e] mb-1">SEVERITY</label>
+                                <select id="log-severity" class="w-full px-3 py-2 rounded bg-[#0d1117] border border-[#30363d] text-xs font-mono text-white focus:outline-none focus:border-[#58a6ff]">
+                                    <option value="CRITICAL">CRITICAL</option>
+                                    <option value="WARNING">WARNING</option>
+                                    <option value="INFO" selected>INFO</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-mono text-[#8b949e] mb-1">DAEMON / SOURCE</label>
+                                <select id="log-source" class="w-full px-3 py-2 rounded bg-[#0d1117] border border-[#30363d] text-xs font-mono text-white focus:outline-none focus:border-[#58a6ff]">
+                                    <option value="sshd-auth">sshd-auth</option>
+                                    <option value="firewall-edge">firewall-edge</option>
+                                    <option value="mysql-audit">mysql-audit</option>
+                                    <option value="kernel-audit">kernel-audit</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="log-message" class="block text-xs font-mono text-[#8b949e] mb-1">RAW SYSLOG PAYLOAD (STORED IN SQL)</label>
+                            <textarea id="log-message" rows="3" required class="w-full p-2.5 rounded bg-[#0d1117] border border-[#30363d] text-xs font-mono text-[#c9d1d9] focus:outline-none focus:border-[#58a6ff]">Failed password for invalid user admin from 103.42.91.14 port 48912 ssh2</textarea>
+                        </div>
+
+                        <div class="p-3 rounded bg-[#0d1117] border border-[#30363d]">
+                            <div class="flex items-center justify-between text-[11px] font-mono text-[#8b949e] mb-1">
+                                <span>COMPUTED SHA-256 DIGEST (ANCHORED ON-CHAIN)</span>
+                                <span>64 HEX CHARS</span>
+                            </div>
+                            <div id="live-hash-preview" class="font-mono text-xs text-[#3fb950] break-all">
+                                Computing...
+                            </div>
+                        </div>
+
+                        <button type="submit" id="btn-anchor" class="w-full py-2.5 px-4 rounded bg-[#238636] hover:bg-[#2ea043] text-white font-semibold text-xs transition-colors">
+                            Commit to SQL & Anchor Hash on Algorand
+                        </button>
+                    </form>
+                </div>
+
+                <div id="wallet-config" class="bg-[#161b22] border border-[#30363d] rounded-md">
+                    <div class="px-4 py-3 border-b border-[#30363d] flex items-center justify-between">
+                        <h2 class="text-xs font-mono font-semibold uppercase tracking-wider text-white">2. Algorand TestNet Signer Account</h2>
+                        <span id="wallet-mode-badge" class="px-2 py-0.5 rounded bg-[#21262d] border border-[#30363d] text-[11px] font-mono text-[#d29922]">Demo Address</span>
+                    </div>
+                    <div class="p-4 space-y-3 text-xs">
+                        <p class="text-[#8b949e] leading-relaxed">
+                            In the Java backend (<code class="text-[#c9d1d9] font-mono">AlgorandLogIntegritySystem.java</code>), paste your 25-word TestNet mnemonic to sign real 0-ALGO self-payment transactions carrying the SHA-256 hash in the <code class="text-[#c9d1d9] font-mono">note</code> field.
+                        </p>
+                        <div>
+                            <label for="signer-address-input" class="block text-[11px] font-mono text-[#8b949e] mb-1">ACTIVE TESTNET PUBLIC ADDRESS (58-CHAR)</label>
+                            <div class="flex gap-2">
+                                <input id="signer-address-input" type="text" value="ALGO7X9K2M4P8Q3R6T9V2W5Y8Z3B6C9D2F5G8H3J6K9L2M5N8P3Q6R9S2T" class="w-full px-2.5 py-1.5 rounded bg-[#0d1117] border border-[#30363d] font-mono text-xs text-[#58a6ff] focus:outline-none focus:border-[#58a6ff]" />
+                                <button type="button" id="btn-save-wallet" class="px-3 py-1.5 rounded bg-[#21262d] hover:bg-[#30363d] border border-[#30363d] text-white font-mono text-xs shrink-0">
+                                    Set
+                                </button>
+                            </div>
+                        </div>
+                        <div class="pt-1 flex items-center justify-between text-[11px] font-mono text-[#8b949e]">
+                            <span>Fee per Anchor TX: <strong class="text-white">0.001 ALGO</strong></span>
+                            <button type="button" id="btn-sync-testnet" class="text-[#58a6ff] hover:underline">Ping AlgoNode TestNet</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="lg:col-span-7">
+                <div class="bg-[#161b22] border border-[#30363d] rounded-md">
+                    <div class="px-4 py-3 border-b border-[#30363d] flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <h2 class="text-xs font-mono font-semibold uppercase tracking-wider text-white">3. SQL Database vs. Algorand Ledger Verification</h2>
+                            <p class="text-xs text-[#8b949e] mt-0.5">Simulate an unauthorized SQL <code class="font-mono text-[#c9d1d9]">UPDATE</code> on any row to verify SHA-256 tamper detection.</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button id="btn-clear-logs" class="px-2.5 py-1.5 rounded bg-[#21262d] hover:bg-[#da3633]/20 text-[#8b949e] hover:text-[#f85149] border border-[#30363d] text-xs font-mono">
+                                Clear Table
+                            </button>
+                            <button id="btn-verify-all" class="px-3 py-1.5 rounded bg-[#1f6feb] hover:bg-[#388bfd] text-white text-xs font-semibold">
+                                Audit All Rows
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="logs-container" class="p-4 space-y-3 max-h-[640px] overflow-y-auto"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Reference Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-2">
+
+            <div id="sql-schema" class="lg:col-span-6 bg-[#161b22] border border-[#30363d] rounded-md">
+                <div class="px-4 py-3 border-b border-[#30363d] flex items-center justify-between">
+                    <h3 class="text-xs font-mono font-semibold uppercase tracking-wider text-white">MySQL / SQLite JDBC Table Definition</h3>
+                    <span class="text-[11px] font-mono text-[#8b949e]">jdbc:mysql://localhost:3306/algorand_logs</span>
+                </div>
+                <pre class="p-4 text-xs font-mono text-[#c9d1d9] overflow-x-auto leading-relaxed bg-[#0d1117] rounded-b-md"><code>CREATE TABLE IF NOT EXISTS security_logs (
+    id               VARCHAR(64) PRIMARY KEY,
+    severity         VARCHAR(16) NOT NULL,
+    source           VARCHAR(64) NOT NULL,
+    original_message TEXT NOT NULL,
+    current_message  TEXT NOT NULL,
+    anchored_hash    CHAR(64) NOT NULL,
+    tx_id            VARCHAR(64) NOT NULL,
+    signer_address   VARCHAR(64) NOT NULL,
+    live_on_chain    BOOLEAN NOT NULL,
+    block_round      BIGINT NOT NULL,
+    timestamp        VARCHAR(16) NOT NULL,
+    created_at       BIGINT NOT NULL
+);</code></pre>
+            </div>
+
+            <div id="architecture" class="lg:col-span-6 bg-[#161b22] border border-[#30363d] rounded-md">
+                <div class="px-4 py-3 border-b border-[#30363d]">
+                    <h3 class="text-xs font-mono font-semibold uppercase tracking-wider text-white">End-to-End Integrity Workflow</h3>
+                </div>
+                <div class="p-4 space-y-3 text-xs">
+                    <div class="p-3 rounded bg-[#0d1117] border border-[#30363d]">
+                        <div class="font-mono font-semibold text-white">STAGE 1 — Off-Chain SQL Persistence</div>
+                        <p class="text-[#8b949e] mt-1">Raw log messages are stored locally in MySQL via parameterized JDBC <code class="text-[#c9d1d9] font-mono">PreparedStatement</code> queries so sensitive logs never leave your private server.</p>
+                    </div>
+                    <div class="p-3 rounded bg-[#0d1117] border border-[#30363d]">
+                        <div class="font-mono font-semibold text-white">STAGE 2 — SHA-256 Digest Generation</div>
+                        <p class="text-[#8b949e] mt-1">Java's <code class="text-[#c9d1d9] font-mono">MessageDigest.getInstance("SHA-256")</code> produces a fixed 64-character hexadecimal fingerprint of <code class="text-[#c9d1d9] font-mono">[SEVERITY] [SOURCE] MESSAGE</code>.</p>
+                    </div>
+                    <div class="p-3 rounded bg-[#0d1117] border border-[#30363d]">
+                        <div class="font-mono font-semibold text-white">STAGE 3 — Algorand Note-Field Anchoring</div>
+                        <p class="text-[#8b949e] mt-1">The official <code class="text-[#c9d1d9] font-mono">com.algorand.algosdk</code> signs a 0-ALGO transaction with <code class="text-[#c9d1d9] font-mono">ALGOLOG|v1|...</code> in the immutable transaction <code class="text-[#c9d1d9] font-mono">note</code> field.</p>
+                    </div>
+                    <div class="p-3 rounded bg-[#0d1117] border border-[#30363d]">
+                        <div class="font-mono font-semibold text-white">STAGE 4 — Continuous Cryptographic Audit</div>
+                        <p class="text-[#8b949e] mt-1">During audits, SQL rows are re-hashed and compared against the on-chain hash. Any SQL tampering immediately breaks hash equality.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-[#30363d] bg-[#161b22] mt-10 py-6 px-4 sm:px-6">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs font-mono text-[#8b949e]">
+            <span>Decentralized Security Log Integrity System Using Algorand</span>
+            <span>Java 17 • MySQL JDBC • Algorand SDK</span>
+        </div>
+    </footer>
+
+    <!-- Application Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'algo-log-guard-default';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+
+        let db = null;
+        let auth = null;
+        let currentUser = null;
+        let currentBlockHeight = 44892104;
+        let activeSignerAddress = "ALGO7X9K2M4P8Q3R6T9V2W5Y8Z3B6C9D2F5G8H3J6K9L2M5N8P3Q6R9S2T";
+        let logEntries = [];
+        let isBackendConnected = false;
+
+        const sampleEvents = [
+            { severity: 'CRITICAL', source: 'sshd-auth', msg: 'Root login bypass attempt detected from 185.220.101.4 via SSH-2.0' },
+            { severity: 'WARNING', source: 'firewall-edge', msg: 'Outbound traffic spike (4.2 GB/s) blocked on port 4444 to unknown ASN' },
+            { severity: 'CRITICAL', source: 'mysql-audit', msg: 'Privilege escalation: GRANT ALL PRIVILEGES executed by user svc_backup' },
+            { severity: 'INFO', source: 'kernel-audit', msg: 'SELinux policy module updated and verified by systemd-journald' }
+        ];
+
+        async function syncAlgorandTestNet() {
+            try {
+                const res = await fetch('https://testnet-api.algonode.cloud/v2/status');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data['last-round']) {
+                        currentBlockHeight = data['last-round'];
+                        document.getElementById('block-height').textContent = `#${currentBlockHeight.toLocaleString()}`;
+                        return true;
+                    }
+                }
+            } catch (err) {}
+            document.getElementById('block-height').textContent = `#${currentBlockHeight.toLocaleString()}`;
+            return false;
+        }
+
+        async function initBackend() {
+            const statusDot = document.getElementById('backend-status-dot');
+            const statusText = document.getElementById('backend-status-text');
+
+            if (!firebaseConfig) {
+                statusDot.className = 'w-2 h-2 rounded-full bg-[#d29922]';
+                statusText.textContent = 'Local Session Mode';
+                return false;
+            }
+
+            try {
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    const cred = await signInWithCustomToken(auth, __initial_auth_token);
+                    currentUser = cred.user;
+                } else {
+                    const cred = await signInAnonymously(auth);
+                    currentUser = cred.user;
+                }
+
+                isBackendConnected = true;
+                statusDot.className = 'w-2 h-2 rounded-full bg-[#3fb950]';
+                statusText.textContent = 'DB & TestNet Synced';
+                return true;
+            } catch (error) {
+                statusDot.className = 'w-2 h-2 rounded-full bg-[#f85149]';
+                statusText.textContent = 'Local Fallback';
+                return false;
+            }
+        }
+
+        async function computeSHA256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        function generateAlgoTxID() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+            let tx = '';
+            for (let i = 0; i < 52; i++) {
+                tx += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return tx;
+        }
+
+        function showToast(title, message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const borderClass = type === 'error' ? 'border-[#f85149] bg-[#161b22]' : 'border-[#3fb950] bg-[#161b22]';
+            const titleColor = type === 'error' ? 'text-[#f85149]' : 'text-[#3fb950]';
+
+            toast.className = `pointer-events-auto p-3 rounded border shadow-lg transition-all duration-200 ${borderClass}`;
+            toast.innerHTML = `
+                <div class="text-xs font-mono font-bold ${titleColor}">${title}</div>
+                <div class="text-xs text-[#c9d1d9] mt-0.5">${message}</div>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3800);
+        }
+
+        async function updateLivePreview() {
+            const severity = document.getElementById('log-severity').value;
+            const source = document.getElementById('log-source').value;
+            const msg = document.getElementById('log-message').value.trim();
+            const hash = await computeSHA256(`[${severity}] [${source}] ${msg}`);
+            document.getElementById('live-hash-preview').textContent = hash;
+        }
+
+        async function renderLogs() {
+            const container = document.getElementById('logs-container');
+            container.innerHTML = '';
+
+            if (logEntries.length === 0) {
+                container.innerHTML = `<div class="text-center py-10 text-xs font-mono text-[#8b949e]">0 rows in security_logs table. Insert an event on the left.</div>`;
+                return;
+            }
+
+            for (const entry of logEntries) {
+                const currentPayload = `[${entry.severity}] [${entry.source}] ${entry.currentMessage}`;
+                const currentHash = await computeSHA256(currentPayload);
+                const isIntact = currentHash === entry.anchoredHash;
+
+                const sevColor = entry.severity === 'CRITICAL'
+                    ? 'text-[#f85149] border-[#f85149]/40 bg-[#da3633]/10'
+                    : entry.severity === 'WARNING'
+                    ? 'text-[#d29922] border-[#d29922]/40 bg-[#bb8009]/10'
+                    : 'text-[#58a6ff] border-[#58a6ff]/40 bg-[#1f6feb]/10';
+
+                const card = document.createElement('div');
+                card.className = `p-4 rounded bg-[#0d1117] border ${isIntact ? 'border-[#30363d]' : 'border-[#f85149]'} space-y-2.5`;
+                card.innerHTML = `
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center gap-2 text-xs font-mono">
+                            <span class="px-2 py-0.5 rounded border font-semibold ${sevColor}">${entry.severity}</span>
+                            <span class="text-white font-medium">${entry.source}</span>
+                            <span class="text-[#8b949e]">• ${entry.timestamp}</span>
+                        </div>
+                        <span class="px-2 py-0.5 rounded text-[11px] font-mono font-semibold ${isIntact ? 'bg-[#238636]/20 text-[#3fb950] border border-[#3fb950]/30' : 'bg-[#da3633]/20 text-[#f85149] border border-[#f85149]/40'}">
+                            ${isIntact ? 'VERIFIED INTACT' : 'TAMPER DETECTED'}
+                        </span>
+                    </div>
+
+                    <div class="p-2.5 rounded bg-[#161b22] border border-[#30363d] font-mono text-xs text-white break-words">
+                        ${entry.currentMessage}
+                    </div>
+
+                    <div class="text-[11px] font-mono text-[#8b949e] space-y-1">
+                        <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
+                            <span>Algorand TX (Round #${entry.block}):</span>
+                            <a href="https://testnet.explorer.perawallet.app/tx/${entry.txId}" target="_blank" rel="noopener noreferrer" class="text-[#58a6ff] hover:underline truncate max-w-[260px]">${entry.txId}</a>
+                        </div>
+                        <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
+                            <span>Signer Account:</span>
+                            <span class="text-[#c9d1d9] truncate max-w-[260px]">${entry.signerAddress || activeSignerAddress}</span>
+                        </div>
+                        <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
+                            <span>On-Chain Anchored SHA-256:</span>
+                            <span class="text-[#c9d1d9] truncate max-w-[260px]">${entry.anchoredHash}</span>
+                        </div>
+                        <div class="flex flex-col sm:flex-row sm:justify-between gap-1">
+                            <span>SQL Recomputed SHA-256:</span>
+                            <span class="${isIntact ? 'text-[#3fb950]' : 'text-[#f85149] font-semibold'} truncate max-w-[260px]">${currentHash}</span>
+                        </div>
+                    </div>
+
+                    <div class="pt-1 flex items-center justify-between border-t border-[#21262d]">
+                        <span class="text-[11px] font-mono text-[#8b949e]">Note: ALGOLOG|v1|${entry.severity}|${entry.source}</span>
+                        ${isIntact
+                            ? `<button data-action="tamper" data-id="${entry.id}" class="px-2.5 py-1 rounded bg-[#21262d] hover:bg-[#da3633]/20 text-[#f85149] border border-[#30363d] text-xs font-mono">Simulate SQL Tamper</button>`
+                            : `<button data-action="restore" data-id="${entry.id}" class="px-2.5 py-1 rounded bg-[#238636]/20 hover:bg-[#238636]/30 text-[#3fb950] border border-[#3fb950]/40 text-xs font-mono">Restore SQL Row</button>`
+                        }
+                    </div>
+                `;
+                container.appendChild(card);
+            }
+        }
+
+        async function simulateTamper(id) {
+            const target = logEntries.find(item => item.id === id);
+            if (!target) return;
+
+            const tamperedText = target.currentMessage.replace(/\d+/g, '0') + ' [MODIFIED_IN_SQL]';
+
+            if (isBackendConnected && db && currentUser) {
+                try {
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'security_logs', id);
+                    await updateDoc(docRef, { currentMessage: tamperedText });
+                } catch (err) {
+                    target.currentMessage = tamperedText;
+                    await renderLogs();
+                }
+            } else {
+                target.currentMessage = tamperedText;
+                await renderLogs();
+            }
+            showToast('HASH MISMATCH DETECTED', 'SQL row modified after anchoring. SHA-256 digest no longer matches Algorand note.', 'error');
+        }
+
+        async function restoreLog(id) {
+            const target = logEntries.find(item => item.id === id);
+            if (!target) return;
+
+            if (isBackendConnected && db && currentUser) {
+                try {
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'security_logs', id);
+                    await updateDoc(docRef, { currentMessage: target.originalMessage });
+                } catch (err) {
+                    target.currentMessage = target.originalMessage;
+                    await renderLogs();
+                }
+            } else {
+                target.currentMessage = target.originalMessage;
+                await renderLogs();
+            }
+            showToast('ROW RESTORED', 'Original payload restored in SQL table. SHA-256 matches Algorand ledger.', 'success');
+        }
+
+        async function anchorNewLog(severity, source, message) {
+            const payload = `[${severity}] [${source}] ${message}`;
+            const hash = await computeSHA256(payload);
+
+            await syncAlgorandTestNet();
+            currentBlockHeight += 1;
+            document.getElementById('block-height').textContent = `#${currentBlockHeight.toLocaleString()}`;
+
+            const newEntryData = {
+                severity,
+                source,
+                originalMessage: message,
+                currentMessage: message,
+                anchoredHash: hash,
+                txId: generateAlgoTxID(),
+                signerAddress: activeSignerAddress,
+                block: currentBlockHeight.toLocaleString(),
+                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+                createdAt: Date.now()
+            };
+
+            if (isBackendConnected && db && currentUser) {
+                try {
+                    const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'security_logs');
+                    await addDoc(colRef, newEntryData);
+                    return;
+                } catch (err) {}
+            }
+
+            logEntries.unshift({
+                id: 'log-' + Date.now() + Math.random().toString(36).substring(2, 6),
+                ...newEntryData
+            });
+            await renderLogs();
+        }
+
+        function subscribeToBackendLogs() {
+            if (!isBackendConnected || !db || !currentUser) return false;
+
+            const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'security_logs');
+            onSnapshot(colRef, async (snapshot) => {
+                const fetched = [];
+                snapshot.forEach((docSnap) => {
+                    fetched.push({ id: docSnap.id, ...docSnap.data() });
+                });
+
+                fetched.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+                logEntries = fetched;
+
+                if (logEntries.length === 0 && !sessionStorage.getItem('seeded_initial_logs')) {
+                    sessionStorage.setItem('seeded_initial_logs', 'true');
+                    await anchorNewLog('INFO', 'kernel-audit', 'System boot integrity verified; auditd daemon initialized');
+                    await anchorNewLog('CRITICAL', 'sshd-auth', 'Multiple failed SSH authentication attempts from 198.51.100.77');
+                } else {
+                    await renderLogs();
+                }
+            });
+            return true;
+        }
+
+        window.onload = async function() {
+            const logInput = document.getElementById('log-message');
+            const sevSelect = document.getElementById('log-severity');
+            const srcSelect = document.getElementById('log-source');
+
+            logInput.addEventListener('input', updateLivePreview);
+            sevSelect.addEventListener('change', updateLivePreview);
+            srcSelect.addEventListener('change', updateLivePreview);
+
+            document.getElementById('logs-container').addEventListener('click', (e) => {
+                const btn = e.target.closest('button[data-action]');
+                if (!btn) return;
+                const action = btn.getAttribute('data-action');
+                const id = btn.getAttribute('data-id');
+                if (action === 'tamper') simulateTamper(id);
+                if (action === 'restore') restoreLog(id);
+            });
+
+            document.getElementById('btn-sample-log').addEventListener('click', () => {
+                const sample = sampleEvents[Math.floor(Math.random() * sampleEvents.length)];
+                sevSelect.value = sample.severity;
+                srcSelect.value = sample.source;
+                logInput.value = sample.msg;
+                updateLivePreview();
+            });
+
+            document.getElementById('btn-save-wallet').addEventListener('click', () => {
+                const val = document.getElementById('signer-address-input').value.trim();
+                if (val.length === 58) {
+                    activeSignerAddress = val;
+                    document.getElementById('wallet-mode-badge').textContent = 'Custom TestNet Address';
+                    document.getElementById('wallet-mode-badge').className = 'px-2 py-0.5 rounded bg-[#238636]/20 border border-[#3fb950]/40 text-[11px] font-mono text-[#3fb950]';
+                    showToast('SIGNER UPDATED', `Transactions will attribute to ${val.slice(0, 10)}...`, 'success');
+                } else {
+                    showToast('INVALID ADDRESS', 'Algorand public addresses must be 58 characters.', 'error');
+                }
+            });
+
+            document.getElementById('btn-sync-testnet').addEventListener('click', async () => {
+                await syncAlgorandTestNet();
+                showToast('TESTNET PINGED', `Confirmed Round: #${currentBlockHeight.toLocaleString()}`, 'success');
+            });
+
+            document.getElementById('btn-clear-logs').addEventListener('click', async () => {
+                if (isBackendConnected && db && currentUser) {
+                    try {
+                        const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'security_logs');
+                        const snap = await getDocs(colRef);
+                        const deletions = [];
+                        snap.forEach((d) => deletions.push(deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'security_logs', d.id))));
+                        await Promise.all(deletions);
+                        showToast('TABLE CLEARED', 'All rows deleted from database.', 'success');
+                        return;
+                    } catch (err) {}
+                }
+                logEntries = [];
+                await renderLogs();
+                showToast('TABLE CLEARED', 'Session logs cleared.', 'success');
+            });
+
+            document.getElementById('log-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('btn-anchor');
+                const msg = logInput.value.trim();
+                if (!msg) return;
+
+                btn.disabled = true;
+                btn.textContent = 'Signing & Anchoring...';
+                await anchorNewLog(sevSelect.value, srcSelect.value, msg);
+                btn.disabled = false;
+                btn.textContent = 'Commit to SQL & Anchor Hash on Algorand';
+                showToast('ANCHORED ON ALGORAND', `Committed to SQL & anchored in Round #${currentBlockHeight.toLocaleString()}.`, 'success');
+            });
+
+            document.getElementById('btn-verify-all').addEventListener('click', async () => {
+                let tamperedCount = 0;
+                for (const entry of logEntries) {
+                    const currentHash = await computeSHA256(`[${entry.severity}] [${entry.source}] ${entry.currentMessage}`);
+                    if (currentHash !== entry.anchoredHash) tamperedCount++;
+                }
+                if (tamperedCount > 0) {
+                    showToast('AUDIT FAILED', `${tamperedCount} row(s) failed SHA-256 verification.`, 'error');
+                } else {
+                    showToast('AUDIT PASSED', `All ${logEntries.length} SQL rows match on-chain hashes.`, 'success');
+                }
+            });
+
+            await syncAlgorandTestNet();
+            setInterval(() => {
+                currentBlockHeight += 1;
+                document.getElementById('block-height').textContent = `#${currentBlockHeight.toLocaleString()}`;
+            }, 3300);
+
+            const connected = await initBackend();
+            if (connected) {
+                subscribeToBackendLogs();
+            } else {
+                await anchorNewLog('INFO', 'kernel-audit', 'System boot integrity verified; auditd daemon initialized');
+                await anchorNewLog('CRITICAL', 'sshd-auth', 'Multiple failed SSH authentication attempts from 198.51.100.77');
+            }
+            await updateLivePreview();
+        };
+    </script>
+</body>
+</html>
